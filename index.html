@@ -28,8 +28,8 @@
         box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
     }
 
-    .item label:last-child input {
-        width: 30px;
+    .item .value {
+        width: 40px;
     }
 
     .quest label {
@@ -37,6 +37,9 @@
         font-size: 16px;
         font-weight: normal;
         line-height: 1.7;
+    }
+    .insertBtn {
+      margin-top: 20px;
     }
     </style>
 </head>
@@ -49,43 +52,25 @@
                 <hr>
                 <div class="col-xs-12 col-sm-5">
                     <label>題目</label>
-                    <textarea class="form-control" v-model="quest_new"></textarea>
+                    <textarea class="form-control" v-model="questNew"></textarea>
+                    <button @click="insertquest" class="insertBtn btn btn-info">新增</button>
                 </div>
                 <div class="col-xs-12 col-sm-7">
-                    <div class="item">
-                        <label>選項1：
-                            <input type="text" v-model="ans_new_1">
+                    <div class="item" v-for="(item, idx) in optionsArray">
+                        <label>選項{{idx + 1}}：
+                            <input type="text" v-model="item.ans">
                         </label>
                         <label>配分：
-                            <input type="text" v-model="value_new_1">
+                            <input type="text" v-model.number="item.value" class="value">
                         </label>
-                    </div>
-                    <div class="item">
-                        <label>選項2：
-                            <input type="text" v-model="ans_new_2">
-                        </label>
-                        <label>配分：
-                            <input type="text" v-model="value_new_2">
-                        </label>
-                    </div>
-                    <div class="item">
-                        <label>選項3：
-                            <input type="text" v-model="ans_new_3">
-                        </label>
-                        <label>配分：
-                            <input type="text" v-model="value_new_3">
-                        </label>
-                    </div>
-                    <div class="item">
-                        <label>選項4：
-                            <input type="text" v-model="ans_new_4">
-                        </label>
-                        <label>配分：
-                            <input type="text" v-model="value_new_4">
-                        </label>
+                        <button @click="addOption" type="button" class="btn btn-default" title="新增選項">
+                          <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                        <button @click="removeOption(idx)" v-show="optionsArray.length > 1" type="button" class="btn btn-default" title="刪除選項">
+                          <span class="glyphicon glyphicon-minus"></span>
+                        </button>
                     </div>
                 </div>
-                <button @click="insertquest" class="btn btn-info">新增</button>
             </div>
         </div>
         <div class="row">
@@ -95,13 +80,13 @@
                 <div class="quest form-group">
                     <h3><strong>第{{ index + 1 }}題: {{questions[index].quest }}</strong></h3>
                     <label v-for="(answer, idx) in questions[index].options">
-                        <input type="radio" :value="answer.value" v-model="questions[index].selected"> {{ idx + 1 }}. {{ answer.ans }}
+                        <input type="radio" :name="'quest'+index+1" :value="answer.value" v-model="questions[index].selected"> {{ idx + 1 }}. {{ answer.ans }}
                     </label>
                 </div>
                 <button @click="prevquest" v-show="index < questions.length && index > 0" class="btn btn-primary">上一題</button>
                 <button @click="nextquest" v-show="index < questions.length - 1" class="btn btn-primary">下一題</button>
                 <button @click="settlement" v-show="index == questions.length -1" class="btn btn-danger">看結果</button>
-                <button @click="reset" class="btn btn-success">重置</button>
+                <button @click="reset" v-show="index == questions.length -1" class="btn btn-success">重置</button>
             </div>
         </div>
     </div>
@@ -109,15 +94,8 @@
     var vm = new Vue({
         el: '#app',
         data: {
-            quest_new: null,
-            ans_new_1: null,
-            ans_new_2: null,
-            ans_new_3: null,
-            ans_new_4: null,
-            value_new_1: null,
-            value_new_2: null,
-            value_new_3: null,
-            value_new_4: null,
+            questNew: null,
+            optionsArray: [{ ans: null, value: null }],
             index: 0,
             questions: [{
                     quest: '如果你是童話故事中，想吃掉三隻小豬的大野狼，你認為使用哪一種方法可以容易吃掉他們？',
@@ -160,29 +138,36 @@
             }
         },
         methods: {
+            addOption: function(){
+              isEmpty = 0;
+              for(item in this.optionsArray) {
+                if (item.ans === null)  isEmpty++;
+                if (item.value === null) isEmpty++;
+              }
+              if(this.questNew === null || isEmpty > 0) {
+                alert('題目、選項及配分尚未填寫完成，請再確認！');
+              } else {
+                this.optionsArray.push({ ans: null, value: null })
+              }
+            },
+            removeOption: function(idx){
+                this.optionsArray.splice(idx, 1)
+            },
             insertquest: function() {
-                if (this.quest_new === null || this.ans_new_1 === null || this.ans_new_2 === null || this.ans_new_3 === null || this.ans_new_4 === null || this.value_new_1 === null || this.value_new_2 === null || this.value_new_3 === null || this.value_new_4 === null) {
+                for(item in this.optionsArray) {
+                  if (item.ans === null)  isEmpty++;
+                  if (item.value === null) isEmpty++;
+                }
+                if (this.questNew === null || isEmpty > 0) {
                     alert('您欲新增的題目、題項及配分尚未填寫完全，請再檢查後送出！');
                 } else {
                     this.questions.push({
-                        quest: this.quest_new.trim(),
-                        options: [
-                            { ans: this.ans_new_1, value: parseInt(this.value_new_1) },
-                            { ans: this.ans_new_2, value: parseInt(this.value_new_2) },
-                            { ans: this.ans_new_3, value: parseInt(this.value_new_3) },
-                            { ans: this.ans_new_4, value: parseInt(this.value_new_4) },
-                        ],
+                        quest: this.questNew.trim(),
+                        options: this.optionsArray,
                         selected: null,
                     });
-                    this.quest_new = null;
-                    this.ans_new_1 = null;
-                    this.ans_new_2 = null;
-                    this.ans_new_3 = null;
-                    this.ans_new_4 = null;
-                    this.value_new_1 = null;
-                    this.value_new_2 = null;
-                    this.value_new_3 = null;
-                    this.value_new_4 = null;
+                    this.questNew = null;
+                    this.optionsArray = [{ ans: null, value: null }];
                     alert('已新增完畢!');
                 }
             },
